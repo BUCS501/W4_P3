@@ -1,7 +1,6 @@
 package com.example.w4_p3;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.WebView;
@@ -18,12 +17,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         WebView webView = (WebView) findViewById(R.id.webView);
-
         button1 = (Button) findViewById(R.id.button1) ;
+
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                webView.loadUrl("http://webb.nasa.gov/");
+                webView.loadUrl("https://www.ecosia.org/");
             }
         });
     }
