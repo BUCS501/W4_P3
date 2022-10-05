@@ -8,11 +8,14 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,15 +24,53 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView;
     private SeekBar seekBar;
     private int seekBarProgress;
-    public String largestChangeDir;
+    public String largestPosDir;
+
+    private double[] prevPos = new double[3];
+
+    private double currAccel, prevVal;
 
     private SensorManager sensorManager;
     private Sensor accelerometer;
 
+
+    public void changeDisplayURL(String option) {
+        String URL;
+        if (option.equals("X")) URL = "https://www.ecosia.org/";
+        else if (option.equals("Y")) URL = "https://www.dogpile.com/";
+        else if (option.equals("Z")) URL = "https://webb.nasa.gov/ ";
+
+        // random 404 error msg page - FOR FUN
+        else URL = "https://github.com/karenLee57/karenLee57.github.io-hangman";
+
+        WebView webView = (WebView) findViewById(R.id.webView);
+        webView.loadUrl(URL);
+
+    }
+
     private SensorEventListener sensorEventListener = new SensorEventListener() {
         @Override
         public void onSensorChanged(SensorEvent sensorEvent) {
+            double[] currPos = new double[]{sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]};
 
+            currAccel = Math.sqrt((currPos[0]*currPos[0] + currPos[1]*currPos[1] + currPos[2]*currPos[2]));
+            double changeInAccel = Math.abs(currAccel - prevVal);
+            prevVal = currAccel;
+
+            double[] changedPos =  new double[3];
+            for(int i = 0; i < changedPos.length; i++){
+                changedPos[i] = Math.abs(currPos[i] - prevPos[i]); prevPos[i] = currPos[i];
+            }
+
+            double largestPosChange = changedPos[0]; largestPosDir = "X";
+            if (changedPos[1] > largestPosChange) { largestPosChange = changedPos[1]; largestPosDir = "Y"; }
+            if (changedPos[2] > largestPosChange) { largestPosChange = changedPos[2]; largestPosDir = "Z"; }
+
+            if (largestPosChange > seekBarProgress) {
+                Toast.makeText(getApplicationContext(), ("Movement on the " + largestPosDir + " axis."), Toast.LENGTH_SHORT).show();
+                Log.i(largestPosDir,("Change in " + largestPosDir + " axis"));
+                changeDisplayURL(largestPosDir);
+            }
         }
 
         @Override
@@ -37,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
 
         }
     };
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,15 +112,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        WebView webView = (WebView) findViewById(R.id.webView);
         button = (Button) findViewById(R.id.button) ;
+    }
 
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                webView.loadUrl("https://www.ecosia.org/");
-            }
-        });
+    protected void onResume() {
+        super.onResume();
+        sensorManager.registerListener(sensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    protected void onPause() {
+        super.onPause();
+        sensorManager.unregisterListener(sensorEventListener);
     }
 }
 
