@@ -19,12 +19,10 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button button;
-    private WebView webView;
     private TextView textView;
     private SeekBar seekBar;
     private int seekBarProgress;
-    public String largestPosDir;
+    public String prevPosDir = "A", largestPosDir;
 
     private double[] prevPos = new double[3];
 
@@ -32,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
 
     private SensorManager sensorManager;
     private Sensor accelerometer;
-
 
     public void changeDisplayURL(String option) {
         String URL;
@@ -45,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
 
         WebView webView = (WebView) findViewById(R.id.webView);
         webView.loadUrl(URL);
-
     }
 
     private SensorEventListener sensorEventListener = new SensorEventListener() {
@@ -59,17 +55,19 @@ public class MainActivity extends AppCompatActivity {
 
             double[] changedPos =  new double[3];
             for(int i = 0; i < changedPos.length; i++){
-                changedPos[i] = Math.abs(currPos[i] - prevPos[i]); prevPos[i] = currPos[i];
+                changedPos[i] = Math.abs(currPos[i] - prevPos[i]);
+                prevPos[i] = currPos[i];
             }
 
             double largestPosChange = changedPos[0]; largestPosDir = "X";
             if (changedPos[1] > largestPosChange) { largestPosChange = changedPos[1]; largestPosDir = "Y"; }
             if (changedPos[2] > largestPosChange) { largestPosChange = changedPos[2]; largestPosDir = "Z"; }
 
-            if (largestPosChange > seekBarProgress) {
-                Toast.makeText(getApplicationContext(), ("Movement on the " + largestPosDir + " axis."), Toast.LENGTH_SHORT).show();
+            if (largestPosChange > seekBarProgress && !prevPosDir.equals(largestPosDir)) {
+                Toast.makeText(getApplicationContext(), ("Movement on the " + largestPosDir + " axis by " + String.valueOf(largestPosChange)), Toast.LENGTH_SHORT).show();
                 Log.i(largestPosDir,("Change in " + largestPosDir + " axis"));
                 changeDisplayURL(largestPosDir);
+                prevPosDir = largestPosDir;
             }
         }
 
@@ -93,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         seekBar = (SeekBar) findViewById(R.id.seekBar);
+        seekBarProgress = 10; // DEFAULT VAL
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -111,8 +110,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-        button = (Button) findViewById(R.id.button) ;
     }
 
     protected void onResume() {
